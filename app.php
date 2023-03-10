@@ -1,5 +1,5 @@
 <?php
-define("CHECK_TIMEOUT", 20);
+define("CHECK_TIMEOUT", 60);
 define("COLOR", "#006eb9");
 define("SAVE_FILE", './save.json');
 define("ARTEK_LINK", "https://artek.org/vuzy-partnery/partners/");
@@ -15,6 +15,7 @@ echo coloredString("------------------------------------\n\r", "light_cyan");
 echo coloredString("- Starting...\n\r", "green");
 
 error_reporting( 0 );
+set_time_limit( 0 );
 
 require_once("webhook.php");
 $dw = new DiscordWebhook(DISCORD_WEBHOOK);
@@ -76,7 +77,7 @@ function sendAlertPartners($array){
             //$msg->setImage($value['data']['avatar'], $value['data']['avatar'], 100, 100);
         }
 
-        echo coloredString('{}', 'cyan').coloredString(" Обновлено: {$title}, {$event_name}\n\r");
+        echo coloredString('{'.$value['type'].'}', 'cyan').coloredString(" Обновлено: {$title}, {$event_name}\n\r");
 
         $msg->send();
     }
@@ -97,7 +98,7 @@ function partnerInformation(){
         $exp = array();
         if($change > 0){
             foreach($result['data'] as $key => $value){
-                $key = array_search($value['title'], array_column($last_result, 'title'));
+                $key = array_search($value['title'], array_column($last_result['data'], 'title'));
                 if($key){
                     if($value['events_amount'] != $last_result['data'][$key]['events_amount']){
                         $exp[] = array(
@@ -138,14 +139,15 @@ function parsePartners($partners){
             $partnerTitle = findByClass($value,'div','partner__title')[0]->textContent;
             $part = findByClass($value,'div','partner__right')[0];
             $partnerProgram = findByClass($part,'div','partner__about-desc')[0]->textContent;
-            $am = substr_count($content, 'Положение');
             
             $links = array();
             $other_links = array();
+            $am = 0;
             foreach(findByClass($value,'div','attachment__name') as $at_id => $at_name){
                 $val = $at_name->firstChild->attributes->getNamedItem("href")->nodeValue;
                 if(strpos($at_name->textContent, 'Положение') !== false){
                     $links[] = array('name' => $at_name->firstChild->textContent,'href' => $val);
+                    $am++;
                 } else {
                     $other_links[] = array('name' => $at_name->firstChild->textContent, 'href' => $val);
                 }
